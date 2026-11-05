@@ -1,0 +1,25 @@
+[Unit]
+Description=CloudGuard DR FastAPI backend
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=cloudguard
+Group=cloudguard
+WorkingDirectory=/opt/cloudguard/backend
+EnvironmentFile=/etc/cloudguard/backend.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/cloudguard/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cloudguard/backend
+
+[Install]
+WantedBy=multi-user.target
