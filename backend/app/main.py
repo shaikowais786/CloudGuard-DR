@@ -29,9 +29,11 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 install_error_handlers(app)
-app.include_router(auth_router, prefix=f"{settings.api_prefix}/auth")
-app.include_router(workspaces_router, prefix=f"{settings.api_prefix}/workspaces")
-app.include_router(aws_router, prefix=f"{settings.api_prefix}/aws")
+# Each router already declares its own subpath (/auth, /workspaces, /aws).
+# Add only the shared API prefix here to avoid URLs such as /api/auth/auth/login.
+app.include_router(auth_router, prefix=settings.api_prefix)
+app.include_router(workspaces_router, prefix=settings.api_prefix)
+app.include_router(aws_router, prefix=settings.api_prefix)
 
 
 @app.get("/health", tags=["health"])
