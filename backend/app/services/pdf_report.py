@@ -12,6 +12,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 import boto3
 from boto3.s3.transfer import S3UploadFailedError
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException
 
@@ -199,7 +200,8 @@ def upload_report_pdf(pdf: BytesIO, workspace_id: str, report_id: str) -> dict[s
     filename = f"cloudguard-disaster-recovery-{report_id}.pdf"
     key = f"workspaces/{workspace_id}/reports/{report_id}.pdf"
     disposition = f'attachment; filename="{filename}"'
-    client = boto3.client("s3", region_name=settings.aws_region)
+    s3_config = Config(signature_version="s3v4")
+    client = boto3.client("s3", region_name="ap-south-2", config=s3_config)
     pdf.seek(0)
     try:
         try:
@@ -214,8 +216,8 @@ def upload_report_pdf(pdf: BytesIO, workspace_id: str, report_id: str) -> dict[s
             headers = bucket_info.get("ResponseMetadata", {}).get("HTTPHeaders", {})
             bucket_region = headers.get("x-amz-bucket-region")
 
-        if bucket_region and bucket_region != settings.aws_region:
-            client = boto3.client("s3", region_name=bucket_region)
+        if bucket_region and bucket_region != client.meta.region_name:
+            client = boto3.client("s3", region_name=bucket_region, config=s3_config)
 
         client.upload_fileobj(
             pdf,
