@@ -94,8 +94,11 @@ class S3Service(AWSService):
             lifecycle = True
             try:
                 bucket_client.get_bucket_lifecycle_configuration(Bucket=name)
-            except bucket_client.exceptions.NoSuchLifecycleConfiguration:
-                lifecycle = False
+            except ClientError as exc:
+                if exc.response.get("Error", {}).get("Code") == "NoSuchLifecycleConfiguration":
+                    lifecycle = False
+                else:
+                    raise
             versioned = versioning == "Enabled"
             score = 96 - (16 if not encrypted else 0) - (16 if not public_blocked else 0) - (12 if not versioned else 0) - (5 if not lifecycle else 0)
             risk = "High" if not encrypted or not public_blocked else "Medium" if not versioned or not lifecycle else "Low"
