@@ -202,6 +202,21 @@ def upload_report_pdf(pdf: BytesIO, workspace_id: str, report_id: str) -> dict[s
     client = boto3.client("s3", region_name=settings.aws_region)
     pdf.seek(0)
     try:
+        try:
+            bucket_info = client.head_bucket(Bucket=bucket)
+        except ClientError as exc:
+            # S3 includes the bucket's actual Region on redirects and access errors.
+            headers = exc.response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+            bucket_region = headers.get("x-amz-bucket-region")
+            if not bucket_region:
+                raise
+        else:
+            headers = bucket_info.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+            bucket_region = headers.get("x-amz-bucket-region")
+
+        if bucket_region and bucket_region != settings.aws_region:
+            client = boto3.client("s3", region_name=bucket_region)
+
         client.upload_fileobj(
             pdf,
             bucket,
