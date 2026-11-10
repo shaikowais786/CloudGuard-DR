@@ -230,7 +230,12 @@ def upload_report_pdf(pdf: BytesIO, workspace_id: str, report_id: str) -> dict[s
                 "Metadata": {"workspace-id": workspace_id, "report-id": report_id},
             },
         )
-        download_url = client.generate_presigned_url(
+        presign_client = boto3.client(
+            "s3",
+            region_name=bucket_region or client.meta.region_name,
+            config=s3_config,
+        )
+        download_url = presign_client.generate_presigned_url(
             "get_object",
             Params={
                 "Bucket": bucket,
