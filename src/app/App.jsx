@@ -134,9 +134,37 @@ function HistoryPage(){
  return <div className="page"><Title eyebrow="ENVIRONMENT CHANGES" title="Scan history" description="Track recovery posture and compare infrastructure changes." action={<Button variant="secondary" onClick={()=>latest&&previous?toast.info(`Latest scan score ${latest.score}; previous scan score ${previous.score}.`):toast.info('Complete at least two scans to compare assessments.')}>Compare scans</Button>}/>{error&&<div className="inventory-error"><b>Scan history could not be loaded.</b><button onClick={load}>Retry</button></div>}{loading?<div className="inventory-skeleton">{Array.from({length:4},(_,i)=><div key={i}/>)}</div>:<><div className="history-top"><Card><Heading title="Score progression" sub="Your resilience score across completed scans" action={latest&&previous?<Pill tone={latest.score>=previous.score?'low':'medium'}>{latest.score-previous.score>=0?'+':''}{latest.score-previous.score} points</Pill>:null}/><ScoreChart height={215} data={chartData}/></Card><Card className="history-insight"><label className="eyebrow">LATEST ASSESSMENT</label><strong>{latest?<><AnimatedValue value={latest.score}/><small> / 100</small></>:'—'}</strong><p>{latest?`${latest.resources_scanned} resources scanned with ${latest.findings} findings identified.`:'Run your first scan to start tracking resilience over time.'}</p><div>{previous?<>Previous score <b>{previous.score}</b>　→　Current <b className="good">{latest.score}</b></>:<>Completed scans <b>{items.length}</b></>}</div></Card></div><Card className="timeline"><Heading title="Assessment timeline" sub="Each scan captures a point-in-time view of your infrastructure."/>{items.length?items.map((scan,i)=><div className="scan-row" key={scan.scan_id}><i className="timeline-dot"/><span><b>{i===0?'Latest assessment':'Infrastructure scan'}</b><small>{new Date(scan.scan_time).toLocaleString()}</small><small><code>{scan.scan_id}</code> · {scan.resources_scanned} resources · {scan.findings} findings</small></span><Pill tone={scan.trend==='improving'?'low':'medium'}>{scan.trend||'complete'}</Pill><strong><AnimatedValue value={scan.score}/><small>DR score</small></strong></div>):<div className="empty-state"><b>No completed scans yet</b><small>Connect an AWS account and run a scan to begin your assessment history.</small><LinkAction to="/scanner">Open AWS scanner</LinkAction></div>}</Card></>}</div>
 }
 function SettingsPage(){
+  const {user,workspace}=useAuth()
   const [active,A]=useState('Workspace'),[weekly,W]=useState(true),[informational,I]=useState(false),[alerts,N]=useState(true),[mfa,M]=useState(true)
-  const [fields,setFields]=useState({workspaceName:'',accountAlias:'',profileName:'',profileEmail:'',profileRole:'',profileWorkspace:''})
+  const [fields,setFields]=useState(()=>{
+    const stored=(key,fallback='')=>{try{const value=localStorage.getItem(key);return value===null?fallback:value}catch{return fallback}}
+    const workspaceName=stored('cloudguard_workspace_name',workspace?.name||workspace?.workspace_name||'')
+    return {
+      workspaceName,
+      accountAlias:stored('cloudguard_account_alias'),
+      profileName:stored('cloudguard_profile_name',user?.name||user?.full_name||''),
+      profileEmail:stored('cloudguard_profile_email',user?.email||''),
+      profileRole:stored('cloudguard_profile_role',user?.role||''),
+      profileWorkspace:stored('cloudguard_profile_workspace',workspaceName),
+    }
+  })
   const updateField=event=>setFields(current=>({...current,[event.target.name]:event.target.value}))
+  const saveSettings=()=>{
+    try{
+      const values={
+        cloudguard_workspace_name:fields.workspaceName,
+        cloudguard_account_alias:fields.accountAlias,
+        cloudguard_profile_name:fields.profileName,
+        cloudguard_profile_email:fields.profileEmail,
+        cloudguard_profile_role:fields.profileRole,
+        cloudguard_profile_workspace:fields.profileWorkspace,
+      }
+      Object.entries(values).forEach(([key,value])=>localStorage.setItem(key,value))
+      toast.success(active+' settings saved in this browser.')
+    }catch{
+      toast.error('Settings could not be saved in this browser.')
+    }
+  }
   const sections=['Workspace','Profile','Team','Notifications','Security']
   const toggles={
     Workspace:[['Automatic weekly scans','Run every Monday at 9:00 AM',weekly,W],['Include informational findings','Show low impact findings in reports',informational,I]],
@@ -153,7 +181,7 @@ function SettingsPage(){
         {active==='Profile'&&<><h3>Profile details</h3><div className="fields"><label>Full name<input name="profileName" value={fields.profileName} onChange={updateField}/></label><label>Email address<input type="email" name="profileEmail" value={fields.profileEmail} onChange={updateField}/></label><label>Role<input name="profileRole" value={fields.profileRole} onChange={updateField}/></label><label>Workspace<input name="profileWorkspace" value={fields.profileWorkspace} onChange={updateField}/></label></div></>}
         {active==='Team'&&<><h3>Workspace members</h3><div className="team-list">{[['AS','Alexandra Smith','alexandra.smith@acme.io','Admin'],['JL','Jordan Lee','jordan.lee@acme.io','Analyst'],['MK','Morgan Kim','morgan.kim@acme.io','Read only']].map(x=><div className="team-member" key={x[2]}><i>{x[0]}</i><span><b>{x[1]}</b><small>{x[2]}</small></span><Pill>{x[3]}</Pill></div>)}</div><Button variant="secondary" onClick={()=>notify('Invite flow is simulated in this demo.')}>Invite a teammate</Button></>}
         {(active==='Workspace'||active==='Notifications'||active==='Security')&&(toggles[active]||[]).map(([label,sub,value,setValue])=><div className="toggle-row" key={label}><span><b>{label}</b><small>{sub}</small></span><button type="button" role="switch" aria-checked={value} aria-label={label} className={'toggle '+(value?'on':'')} onClick={()=>setValue(!value)}/></div>)}
-        <div className="save-row"><span>Changes stay in this browser demo.</span><Button onClick={()=>notify(active+' settings saved for this demo.')}>Save changes</Button></div>
+        <div className="save-row"><span>Changes stay in this browser demo.</span><Button onClick={saveSettings}>Save changes</Button></div>
       </Card>
     </div>
   </div>
