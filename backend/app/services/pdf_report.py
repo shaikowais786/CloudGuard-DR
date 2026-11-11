@@ -232,8 +232,9 @@ def upload_report_pdf(pdf: BytesIO, workspace_id: str, report_id: str) -> dict[s
         )
         presign_client = boto3.client(
             "s3",
-            region_name=bucket_region or client.meta.region_name,
-            config=s3_config,
+            region_name="ap-south-2",
+            endpoint_url="https://s3.ap-south-2.amazonaws.com",
+            config=Config(signature_version="s3v4"),
         )
         download_url = presign_client.generate_presigned_url(
             "get_object",
