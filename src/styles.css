@@ -228,3 +228,18 @@ td code,.scan-row code{font-size:11px}
 .scan-warnings code{color:#d7b890}
 .scan-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:600px){.scan-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.scan-stats span:nth-child(2){border-right:0}}
+
+/* Subtle readability and interaction polish within the existing visual system. */
+.brand small{font-size:9px;line-height:1.4}
+.workspace small,.profile small,.help small{font-size:10px;line-height:1.45}
+.nav-label{font-size:10px;line-height:1.4}
+.nav-link{font-size:12px;transition:color .18s ease,background-color .18s ease}
+.nav-link svg{transition:color .18s ease,transform .18s ease}
+@media(hover:hover) and (pointer:fine){.nav-link:hover svg{transform:translateX(1px)}}
+.table-scroll th,.sort-heading{font-size:11px;line-height:1.4;letter-spacing:.01em}
+.scan-warnings{font-size:10px;line-height:1.55}
+.field-error{font-size:11px;line-height:1.4}
+.connect input,.connect select,.fields input,.fields select,.login-card input,.workspace-create-modal input{transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease}
+.connect input:hover,.connect select:hover,.fields input:hover,.fields select:hover,.login-card input:hover,.workspace-create-modal input:hover{border-color:#3a465a}
+.workspace-dropdown,.top-dropdown,.search-pop{transform-origin:top center}
+@media(prefers-reduced-motion:reduce){.nav-link,.nav-link svg,.connect input,.connect select,.fields input,.fields select,.login-card input,.workspace-create-modal input{transition-duration:.01ms!important;animation-duration:.01ms!important}}
